@@ -1,5 +1,8 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
 
 class LoginRegister extends StatefulWidget {
@@ -15,31 +18,64 @@ class _LoginRegisterState extends State<LoginRegister> {
   final _controllerPass = TextEditingController(text: "1234567");
   bool _registerNewUser = false;
   final _auth = FirebaseAuth.instance;
+  FirebaseStorage _storage = FirebaseStorage.instance;
+  Uint8List? _selectedProfileImage;
+
+  Future<void> _selectProfileImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
+    setState(() {
+      _selectedProfileImage = result?.files.single.bytes;
+    });
+  }
+
+  void _uploadImage(String userId) {
+    if (_selectedProfileImage != null) {
+      Reference profileImageRef = _storage.ref("images/profile/$userId.jpg");
+      UploadTask uploadTask = profileImageRef.putData(_selectedProfileImage!);
+
+      uploadTask.whenComplete(() async {
+        String linkImage = await uploadTask.snapshot.ref.getDownloadURL();
+        print("link image: $linkImage");
+      });
+    }
+  }
 
   Future<void> _formSubmit() async {
-    String nome = _controllerName.text;
+    String name = _controllerName.text;
     String email = _controllerEmail.text;
-    String senha = _controllerPass.text;
+    String pass = _controllerPass.text;
 
     if (email.isNotEmpty && email.contains("@")) {
-      if (senha.isNotEmpty && senha.length > 6) {
+      if (pass.isNotEmpty && pass.length > 6) {
         if (_registerNewUser) {
-          //Registration
-          if (nome.isNotEmpty && nome.length >= 3) {
-            final user = await _auth.createUserWithEmailAndPassword(
-                email: email, password: senha);
+          if (_selectedProfileImage != null) {
+            //Registration
+            if (name.isNotEmpty && name.length >= 3) {
+              final user = await _auth.createUserWithEmailAndPassword(
+                email: email,
+                password: pass,
+              );
 
-            //Upload
-            String? idUsuario = user.user?.uid;
-            print("Successfull registered user id: $idUsuario");
+              //Upload
+              String? userId = user.user?.uid;
+              if (userId != null) {
+                _uploadImage(userId);
+              }
+              print("Successfull registered user id: $userId");
+            } else {
+              print("Invalid name, at least 3 characters");
+            }
           } else {
-            print("Invalid name, at least 3 characters");
+            print('Select a profile image');
           }
         } else {
           //Login
           final user = await _auth.signInWithEmailAndPassword(
             email: email,
-            password: senha,
+            password: pass,
           );
           String? userEmail = user.user?.email;
           print("Registered user email: $userEmail");
@@ -48,7 +84,7 @@ class _LoginRegisterState extends State<LoginRegister> {
         print("Invalid password");
       }
     } else {
-      print("Invalid FEmail");
+      print("Invalid Email");
     }
   }
 
@@ -88,12 +124,19 @@ class _LoginRegisterState extends State<LoginRegister> {
                           Visibility(
                             visible: _registerNewUser,
                             child: ClipOval(
-                              child: Image.asset(
-                                "assets/profile.png",
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              ),
+                              child: _selectedProfileImage != null
+                                  ? Image.memory(
+                                      _selectedProfileImage!,
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      "assets/profile.png",
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
 
@@ -104,7 +147,7 @@ class _LoginRegisterState extends State<LoginRegister> {
                           Visibility(
                             visible: _registerNewUser,
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: _selectProfileImage,
                               child: const Text("Select photo"),
                             ),
                           ),
