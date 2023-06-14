@@ -1,0 +1,33 @@
+import 'package:flutter/material.dart';
+import 'package:whatsapp_web_clone/screens/home.dart';
+import 'package:whatsapp_web_clone/screens/login_register.dart';
+
+class Routes {
+  static Route<dynamic> generateRoutes(RouteSettings settings) {
+    // final args = settings.arguments;
+
+    switch (settings.name) {
+      case "/":
+        return MaterialPageRoute(builder: (_) => const LoginRegister());
+      case "/login":
+        return MaterialPageRoute(builder: (_) => const LoginRegister());
+      case "/home":
+        return MaterialPageRoute(builder: (_) => const Home());
+    }
+
+    return _errorRoute();
+  }
+
+  static Route<dynamic> _errorRoute() {
+    return MaterialPageRoute(builder: (_) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Screen not found!"),
+        ),
+        body: const Center(
+          child: Text("Screen not found!"),
+        ),
+      );
+    });
+  }
+}

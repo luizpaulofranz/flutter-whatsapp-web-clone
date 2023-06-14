@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:whatsapp_web_clone/screens/login_register.dart';
+
+import 'routes.dart';
 
 Future<void> main() async {
   await Firebase.initializeApp(
@@ -23,9 +24,8 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: LoginRegister(),
-      ),
+      initialRoute: "/",
+      onGenerateRoute: Routes.generateRoutes,
     );
   }
 }
