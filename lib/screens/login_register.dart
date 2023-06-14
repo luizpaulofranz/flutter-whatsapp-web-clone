@@ -15,14 +15,29 @@ class LoginRegister extends StatefulWidget {
 }
 
 class _LoginRegisterState extends State<LoginRegister> {
-  final _controllerName = TextEditingController(text: "Jamilton Damasceno");
-  final _controllerEmail = TextEditingController(text: "jamilton@gmail.com");
+  final _controllerName = TextEditingController(text: "Pedro Alcantara");
+  final _controllerEmail =
+      TextEditingController(text: "pedroalcantara21@gmail.com");
   final _controllerPass = TextEditingController(text: "1234567");
   bool _registerNewUser = false;
   final _auth = FirebaseAuth.instance;
   final _storage = FirebaseStorage.instance;
   final _firestore = FirebaseFirestore.instance;
   Uint8List? _selectedProfileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfUserIsLoggedin();
+  }
+
+  void _checkIfUserIsLoggedin() {
+    User? currentUser = _auth.currentUser;
+
+    if (currentUser != null) {
+      Navigator.pushReplacementNamed(context, "/home");
+    }
+  }
 
   Future<void> _selectProfileImage() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -34,7 +49,7 @@ class _LoginRegisterState extends State<LoginRegister> {
     });
   }
 
-  // Uploads profile picture and saves user data on firestore.
+  /// Uploads profile picture and saves user data on firestore.
   void _uploadImage(UserModel user) {
     if (_selectedProfileImage != null) {
       Reference profileImageRef =
@@ -54,6 +69,7 @@ class _LoginRegisterState extends State<LoginRegister> {
     }
   }
 
+  /// Handles Login and Register form submit
   Future<void> _formSubmit() async {
     String name = _controllerName.text;
     String email = _controllerEmail.text;
@@ -72,6 +88,7 @@ class _LoginRegisterState extends State<LoginRegister> {
 
               //Upload
               String? userId = user.user?.uid;
+              print(userId);
               if (userId != null) {
                 final user = UserModel(userId, name, email);
                 _uploadImage(user);
@@ -104,20 +121,20 @@ class _LoginRegisterState extends State<LoginRegister> {
 
   @override
   Widget build(BuildContext context) {
-    double alturaTela = MediaQuery.of(context).size.height;
-    double larguraTela = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Container(
         color: LocalColors.background,
-        width: larguraTela,
-        height: alturaTela,
+        width: screenWidth,
+        height: screenHeight,
         child: Stack(
           children: [
             Positioned(
                 child: Container(
-              width: larguraTela,
-              height: alturaTela * 0.5,
+              width: screenWidth,
+              height: screenHeight * 0.5,
               color: LocalColors.primary,
             )),
             Center(
