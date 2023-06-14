@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:whatsapp_web_clone/models/user_model.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
 
 class LoginRegister extends StatefulWidget {
@@ -18,7 +20,8 @@ class _LoginRegisterState extends State<LoginRegister> {
   final _controllerPass = TextEditingController(text: "1234567");
   bool _registerNewUser = false;
   final _auth = FirebaseAuth.instance;
-  FirebaseStorage _storage = FirebaseStorage.instance;
+  final _storage = FirebaseStorage.instance;
+  final _firestore = FirebaseFirestore.instance;
   Uint8List? _selectedProfileImage;
 
   Future<void> _selectProfileImage() async {
@@ -31,14 +34,22 @@ class _LoginRegisterState extends State<LoginRegister> {
     });
   }
 
-  void _uploadImage(String userId) {
+  // Uploads profile picture and saves user data on firestore.
+  void _uploadImage(UserModel user) {
     if (_selectedProfileImage != null) {
-      Reference profileImageRef = _storage.ref("images/profile/$userId.jpg");
+      Reference profileImageRef =
+          _storage.ref("images/profile/${user.userId}.jpg");
       UploadTask uploadTask = profileImageRef.putData(_selectedProfileImage!);
 
       uploadTask.whenComplete(() async {
         String linkImage = await uploadTask.snapshot.ref.getDownloadURL();
-        print("link image: $linkImage");
+        user.profileImageUrl = linkImage;
+
+        final usersRef = _firestore.collection("users");
+        usersRef.doc(user.userId).set(user.toMap()).then((value) {
+          //main screen
+          Navigator.pushReplacementNamed(context, "/home");
+        });
       });
     }
   }
@@ -62,7 +73,8 @@ class _LoginRegisterState extends State<LoginRegister> {
               //Upload
               String? userId = user.user?.uid;
               if (userId != null) {
-                _uploadImage(userId);
+                final user = UserModel(userId, name, email);
+                _uploadImage(user);
               }
               print("Successfull registered user id: $userId");
             } else {
@@ -73,12 +85,14 @@ class _LoginRegisterState extends State<LoginRegister> {
           }
         } else {
           //Login
-          final user = await _auth.signInWithEmailAndPassword(
-            email: email,
-            password: pass,
-          );
-          String? userEmail = user.user?.email;
-          print("Registered user email: $userEmail");
+          _auth
+              .signInWithEmailAndPassword(
+                email: email,
+                password: pass,
+              )
+              .then(
+                (_) => Navigator.pushReplacementNamed(context, "/home"),
+              );
         }
       } else {
         print("Invalid password");
