@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:whatsapp_web_clone/widgets/contacts_list.dart';
 
 class HomeMobile extends StatelessWidget {
   HomeMobile({Key? key}) : super(key: key);
@@ -45,8 +46,9 @@ class HomeMobile extends StatelessWidget {
               Center(
                 child: Text("Chats"),
               ),
-              Center(
-                child: Text("Contacts"),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: ContactsList(),
               ),
             ],
           ),
