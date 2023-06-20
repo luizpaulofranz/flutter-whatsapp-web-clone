@@ -87,13 +87,13 @@ class _ContactsListState extends State<ContactsList> {
                     );
                   },
                   itemCount: usersList.length,
-                  itemBuilder: (context, indice) {
-                    UserModel user = usersList[indice];
+                  itemBuilder: (context, index) {
+                    UserModel user = usersList[index];
                     return ListTile(
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          "/mensagens",
+                          "/messages",
                           arguments: user,
                         );
                       },
