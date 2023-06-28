@@ -60,6 +60,10 @@ class _LoginRegisterState extends State<LoginRegister> {
         String linkImage = await uploadTask.snapshot.ref.getDownloadURL();
         user.profileImageUrl = linkImage;
 
+        // updates firebaseauth user's data, like name and profile picture
+        await _auth.currentUser?.updateDisplayName(user.name);
+        await _auth.currentUser?.updatePhotoURL(linkImage);
+
         final usersRef = _firestore.collection("users");
         usersRef.doc(user.userId).set(user.toMap()).then((value) {
           //main screen

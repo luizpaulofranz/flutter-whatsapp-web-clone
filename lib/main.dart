@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'resources/local_colors.dart';
 import 'routes.dart';
 
+String initialRoute = "/";
 Future<void> main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: 'AIzaSyBbfoasdgKz5wvcKk21NgQbXGf9GebzNA8',
@@ -15,6 +18,10 @@ Future<void> main() async {
       storageBucket: 'flutter-whatsapp-1d294.appspot.com',
     ),
   );
+  User? loggedUser = FirebaseAuth.instance.currentUser;
+  if (loggedUser != null) {
+    initialRoute = "/home";
+  }
   runApp(const MainApp());
 }
 
@@ -30,7 +37,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: defaultTheme,
-      initialRoute: "/",
+      initialRoute: initialRoute,
       onGenerateRoute: Routes.generateRoutes,
     );
   }

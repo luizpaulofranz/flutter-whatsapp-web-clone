@@ -91,11 +91,13 @@ class _ContactsListState extends State<ContactsList> {
                     UserModel user = usersList[index];
                     return ListTile(
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          "/messages",
-                          arguments: user,
-                        );
+                        Future.delayed(Duration.zero, () {
+                          Navigator.pushNamed(
+                            context,
+                            "/messages",
+                            arguments: user,
+                          );
+                        });
                       },
                       leading: CircleAvatar(
                         radius: 25,
