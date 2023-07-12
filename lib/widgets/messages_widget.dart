@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_web_clone/models/message.dart';
@@ -22,6 +24,9 @@ class _MessagesWidgetState extends State<MessagesWidget> {
   final _firestore = FirebaseFirestore.instance;
   final _messageController = TextEditingController();
 
+  final _streamController = StreamController<QuerySnapshot>.broadcast();
+  late StreamSubscription _streamMessages;
+
   void _sendMessage() {
     String messageText = _messageController.text;
     if (messageText.isNotEmpty) {
@@ -32,9 +37,13 @@ class _MessagesWidgetState extends State<MessagesWidget> {
         Timestamp.now().toString(),
       );
 
-      //Save the message on firebase
       String toUserId = widget.toUser.userId;
+
+      //Save the message on firebase sender
       _saveMessageOnFirebase(fromUserId, toUserId, message);
+
+      //Save the message on firebase receiver
+      _saveMessageOnFirebase(toUserId, fromUserId, message);
     }
   }
 
@@ -52,6 +61,32 @@ class _MessagesWidgetState extends State<MessagesWidget> {
     _messageController.clear();
   }
 
+  void _addMessageListener() {
+    // with this we can live refresh our messages page directly from firebase
+    final stream = _firestore
+        .collection("messages")
+        .doc(widget.fromUser.userId)
+        .collection(widget.toUser.userId)
+        .orderBy("date", descending: false)
+        .snapshots();
+
+    _streamMessages = stream.listen((dados) {
+      _streamController.add(dados);
+    });
+  }
+
+  @override
+  void dispose() {
+    _streamMessages.cancel();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _addMessageListener();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -66,12 +101,70 @@ class _MessagesWidgetState extends State<MessagesWidget> {
       ),
       child: Column(
         children: [
-          Expanded(
-            child: Container(
-              width: screenWidth,
-              color: Colors.transparent,
-              child: const Text("Messages"),
-            ),
+          //Listing messages
+          StreamBuilder(
+            stream: _streamController.stream,
+            builder: (context, snapshot) {
+              switch (snapshot.connectionState) {
+                case ConnectionState.none:
+                case ConnectionState.waiting:
+                  return const Expanded(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text("Loading data..."),
+                          CircularProgressIndicator()
+                        ],
+                      ),
+                    ),
+                  );
+                case ConnectionState.active:
+                case ConnectionState.done:
+                  if (snapshot.hasError) {
+                    return const Center(child: Text("Error on loading data!"));
+                  } else {
+                    final querySnapshot = snapshot.data as QuerySnapshot;
+                    List<DocumentSnapshot> messages =
+                        querySnapshot.docs.toList();
+
+                    return Expanded(
+                      child: ListView.builder(
+                        itemCount: querySnapshot.docs.length,
+                        itemBuilder: (context, index) {
+                          DocumentSnapshot message = messages[index];
+
+                          // Control to align message balloons from sender and receiver
+                          Alignment alignment = Alignment.bottomLeft;
+                          Color color = Colors.white;
+                          if (widget.fromUser.userId == message["userId"]) {
+                            alignment = Alignment.bottomRight;
+                            color = const Color(0xffd2ffa5);
+                          }
+
+                          Size width = MediaQuery.of(context).size * 0.8;
+
+                          return Align(
+                            alignment: alignment,
+                            child: Container(
+                              // with this, we set a max width to this container
+                              constraints: BoxConstraints.loose(width),
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: const BorderRadius.all(
+                                  Radius.circular(8),
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              margin: const EdgeInsets.all(6),
+                              child: Text(message["text"]),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+              }
+            },
           ),
 
           //Text Field
