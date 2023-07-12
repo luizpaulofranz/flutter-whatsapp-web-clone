@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:whatsapp_web_clone/models/chat.dart';
 import 'package:whatsapp_web_clone/models/message.dart';
 import 'package:whatsapp_web_clone/models/user_model.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
@@ -23,6 +24,7 @@ class MessagesWidget extends StatefulWidget {
 class _MessagesWidgetState extends State<MessagesWidget> {
   final _firestore = FirebaseFirestore.instance;
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
 
   final _streamController = StreamController<QuerySnapshot>.broadcast();
   late StreamSubscription _streamMessages;
@@ -39,14 +41,44 @@ class _MessagesWidgetState extends State<MessagesWidget> {
 
       String toUserId = widget.toUser.userId;
 
-      //Save the message on firebase sender
+      //Save the message and last chat on firebase SENDER
       _saveMessageOnFirebase(fromUserId, toUserId, message);
+      final chatFrom = Chat(
+        fromUserId,
+        toUserId,
+        message.text,
+        widget.toUser.name,
+        widget.toUser.email,
+        widget.toUser.profileImageUrl,
+      );
+      _saveChatOnFirebase(chatFrom);
 
-      //Save the message on firebase receiver
+      //Save the message on firebase RECEIVER
       _saveMessageOnFirebase(toUserId, fromUserId, message);
+      final chatTo = Chat(
+        toUserId,
+        fromUserId,
+        message.text,
+        widget.fromUser.name,
+        widget.fromUser.email,
+        widget.fromUser.profileImageUrl,
+      );
+      _saveChatOnFirebase(chatTo);
     }
   }
 
+  // This only saves the last message, used to list users chats
+  void _saveChatOnFirebase(Chat chat) {
+    _firestore
+        .collection("chats")
+        .doc(chat.fromUserId)
+        .collection("last_messages")
+        .doc(chat.toUserId)
+        // Set here is a update, so it will have only one entry
+        .set(chat.toMap());
+  }
+
+  // This saves all messages history, used on chat window
   void _saveMessageOnFirebase(
     String fromUserUd,
     String toUserId,
@@ -70,8 +102,12 @@ class _MessagesWidgetState extends State<MessagesWidget> {
         .orderBy("date", descending: false)
         .snapshots();
 
-    _streamMessages = stream.listen((dados) {
-      _streamController.add(dados);
+    _streamMessages = stream.listen((data) {
+      _streamController.add(data);
+      // to scroll at the end of messages list
+      Timer(const Duration(seconds: 1), () {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
     });
   }
 
@@ -129,6 +165,7 @@ class _MessagesWidgetState extends State<MessagesWidget> {
 
                     return Expanded(
                       child: ListView.builder(
+                        controller: _scrollController,
                         itemCount: querySnapshot.docs.length,
                         itemBuilder: (context, index) {
                           DocumentSnapshot message = messages[index];
