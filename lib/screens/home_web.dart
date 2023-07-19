@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whatsapp_web_clone/models/user_model.dart';
+import 'package:whatsapp_web_clone/provider/chat_provider.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
 import 'package:whatsapp_web_clone/resources/responsive.dart';
 import 'package:whatsapp_web_clone/widgets/chats_widget.dart';
+import 'package:whatsapp_web_clone/widgets/messages_widget.dart';
 
 class HomeWeb extends StatefulWidget {
   const HomeWeb({Key? key}) : super(key: key);
@@ -72,9 +75,11 @@ class _HomeWebState extends State<HomeWeb> {
                       currentUser: _currentUser,
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     flex: 10,
-                    child: MessageSideArea(),
+                    child: MessagesSideArea(
+                      currentUser: _currentUser,
+                    ),
                   )
                 ],
               ),
@@ -173,18 +178,70 @@ class ChatSideArea extends StatelessWidget {
   }
 }
 
-class MessageSideArea extends StatelessWidget {
-  const MessageSideArea({Key? key}) : super(key: key);
+class MessagesSideArea extends StatelessWidget {
+  final UserModel currentUser;
+
+  const MessagesSideArea({
+    Key? key,
+    required this.currentUser,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+    UserModel? toUser = context.watch<ChatProvider>().toUser;
 
-    return Container(
-      width: width,
-      height: height,
-      color: LocalColors.lightBarBackgroud,
-    );
+    return toUser != null
+        ? Column(
+            children: [
+              //Top bar
+              Container(
+                color: LocalColors.barBackground,
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey,
+                      backgroundImage: CachedNetworkImageProvider(
+                        toUser.profileImageUrl,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      toUser.name,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ),
+
+              //Messages List
+              Expanded(
+                child: MessagesWidget(
+                  fromUser: currentUser,
+                  toUser: toUser,
+                ),
+              )
+            ],
+          )
+        : Container(
+            width: width,
+            height: height,
+            color: LocalColors.lightBarBackgroud,
+            child: const Center(
+              child: Text("Please, select a chat to see the messages."),
+            ),
+          );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:whatsapp_web_clone/provider/chat_provider.dart';
 
 import 'resources/local_colors.dart';
 import 'routes.dart';
@@ -22,7 +24,10 @@ Future<void> main() async {
   if (loggedUser != null) {
     initialRoute = "/home";
   }
-  runApp(const MainApp());
+  runApp(ChangeNotifierProvider(
+    create: (context) => ChatProvider(),
+    child: const MainApp(),
+  ));
 }
 
 final ThemeData defaultTheme = ThemeData(

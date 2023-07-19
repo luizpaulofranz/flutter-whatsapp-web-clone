@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whatsapp_web_clone/models/chat.dart';
 import 'package:whatsapp_web_clone/models/message.dart';
 import 'package:whatsapp_web_clone/models/user_model.dart';
+import 'package:whatsapp_web_clone/provider/chat_provider.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
 
 class MessagesWidget extends StatefulWidget {
@@ -93,12 +95,12 @@ class _MessagesWidgetState extends State<MessagesWidget> {
     _messageController.clear();
   }
 
-  void _addMessageListener() {
+  void _addMessageListener({UserModel? toUser}) {
     // with this we can live refresh our messages page directly from firebase
     final stream = _firestore
         .collection("messages")
         .doc(widget.fromUser.userId)
-        .collection(widget.toUser.userId)
+        .collection(toUser?.userId ?? widget.toUser.userId)
         .orderBy("date", descending: false)
         .snapshots();
 
@@ -111,6 +113,13 @@ class _MessagesWidgetState extends State<MessagesWidget> {
     });
   }
 
+  void _updateMessageListener() {
+    UserModel? toUser = context.watch<ChatProvider>().toUser;
+    if (toUser != null) {
+      _addMessageListener(toUser: toUser);
+    }
+  }
+
   @override
   void dispose() {
     _streamMessages.cancel();
@@ -121,6 +130,13 @@ class _MessagesWidgetState extends State<MessagesWidget> {
   void initState() {
     super.initState();
     _addMessageListener();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // we use this to update the message listeners through provider
+    _updateMessageListener();
   }
 
   @override

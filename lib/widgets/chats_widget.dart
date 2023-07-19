@@ -4,7 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whatsapp_web_clone/models/user_model.dart';
+import 'package:whatsapp_web_clone/provider/chat_provider.dart';
+import 'package:whatsapp_web_clone/resources/responsive.dart';
 
 class ChatWidget extends StatefulWidget {
   const ChatWidget({Key? key}) : super(key: key);
@@ -110,11 +113,15 @@ class _ChatWidgetState extends State<ChatWidget> {
 
                   return ListTile(
                     onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/messages",
-                        arguments: toUser,
-                      );
+                      if (Responsive.isMobile(context)) {
+                        Navigator.pushNamed(
+                          context,
+                          "/messages",
+                          arguments: toUser,
+                        );
+                      } else {
+                        context.read<ChatProvider>().toUser = toUser;
+                      }
                     },
                     leading: CircleAvatar(
                       radius: 25,
