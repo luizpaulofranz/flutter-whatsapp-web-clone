@@ -15,15 +15,20 @@ class LoginRegister extends StatefulWidget {
 }
 
 class _LoginRegisterState extends State<LoginRegister> {
-  final _controllerName = TextEditingController(text: "Pedro Alcantara");
-  final _controllerEmail =
-      TextEditingController(text: "pedroalcantara21@gmail.com");
-  final _controllerPass = TextEditingController(text: "1234567");
+  final _controllerName = TextEditingController();
+  final _controllerEmail = TextEditingController();
+  final _controllerPass = TextEditingController();
   bool _registerNewUser = false;
+  bool _loading = false;
   final _auth = FirebaseAuth.instance;
   final _storage = FirebaseStorage.instance;
   final _firestore = FirebaseFirestore.instance;
   Uint8List? _selectedProfileImage;
+
+  bool _emailError = false;
+  bool _nameError = false;
+  bool _passwordError = false;
+  bool _pictureError = false;
 
   @override
   void initState() {
@@ -66,6 +71,9 @@ class _LoginRegisterState extends State<LoginRegister> {
 
         final usersRef = _firestore.collection("users");
         usersRef.doc(user.userId).set(user.toMap()).then((value) {
+          setState(() {
+            _loading = false;
+          });
           //main screen
           Navigator.pushReplacementNamed(context, "/home");
         });
@@ -75,6 +83,13 @@ class _LoginRegisterState extends State<LoginRegister> {
 
   /// Handles Login and Register form submit
   Future<void> _formSubmit() async {
+    setState(() {
+      _loading = true;
+      _emailError = false;
+      _nameError = false;
+      _passwordError = false;
+      _pictureError = false;
+    });
     String name = _controllerName.text;
     String email = _controllerEmail.text;
     String pass = _controllerPass.text;
@@ -99,28 +114,48 @@ class _LoginRegisterState extends State<LoginRegister> {
               }
               print("Successfull registered user id: $userId");
             } else {
+              setState(() {
+                _nameError = true;
+              });
               print("Invalid name, at least 3 characters");
             }
           } else {
+            setState(() {
+              _pictureError = true;
+            });
             print('Select a profile image');
           }
         } else {
           //Login
           _auth
               .signInWithEmailAndPassword(
-                email: email,
-                password: pass,
-              )
+            email: email,
+            password: pass,
+          )
               .then(
-                (_) => Navigator.pushReplacementNamed(context, "/home"),
-              );
+            (_) {
+              setState(() {
+                _loading = false;
+              });
+              Navigator.pushReplacementNamed(context, "/home");
+            },
+          );
         }
       } else {
         print("Invalid password");
+        setState(() {
+          _passwordError = true;
+        });
       }
     } else {
       print("Invalid Email");
+      setState(() {
+        _emailError = true;
+      });
     }
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
@@ -183,6 +218,12 @@ class _LoginRegisterState extends State<LoginRegister> {
                             visible: _registerNewUser,
                             child: OutlinedButton(
                               onPressed: _selectProfileImage,
+                              style: _pictureError
+                                  ? OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                          width: 2, color: Colors.red),
+                                    )
+                                  : null,
                               child: const Text("Select photo"),
                             ),
                           ),
@@ -197,10 +238,18 @@ class _LoginRegisterState extends State<LoginRegister> {
                             child: TextField(
                               keyboardType: TextInputType.text,
                               controller: _controllerName,
-                              decoration: const InputDecoration(
-                                hintText: "Name",
+                              decoration: InputDecoration(
+                                hintText: "Type a valid name",
                                 labelText: "Name",
-                                suffixIcon: Icon(Icons.person_outline),
+                                suffixIcon: const Icon(Icons.person_outline),
+                                enabledBorder: _nameError
+                                    ? const OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          width: 2,
+                                          color: Colors.red,
+                                        ),
+                                      )
+                                    : null,
                               ),
                             ),
                           ),
@@ -208,21 +257,40 @@ class _LoginRegisterState extends State<LoginRegister> {
                           TextField(
                             keyboardType: TextInputType.emailAddress,
                             controller: _controllerEmail,
-                            decoration: const InputDecoration(
-                              hintText: "Email",
+                            decoration: InputDecoration(
+                              hintText: _registerNewUser
+                                  ? "Type a valid e-mail"
+                                  : "Type your login e-mail",
                               labelText: "Email",
-                              suffixIcon: Icon(Icons.mail_outline),
+                              suffixIcon: const Icon(Icons.mail_outline),
+                              enabledBorder: _emailError
+                                  ? const OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        width: 2,
+                                        color: Colors.red,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
-
                           TextField(
                             keyboardType: TextInputType.text,
                             controller: _controllerPass,
                             obscureText: true,
-                            decoration: const InputDecoration(
-                              hintText: "Password",
+                            decoration: InputDecoration(
+                              hintText: _registerNewUser
+                                  ? "Must have more than 7 characters"
+                                  : "Type your password",
                               labelText: "Password",
-                              suffixIcon: Icon(Icons.lock_outline),
+                              suffixIcon: const Icon(Icons.lock_outline),
+                              enabledBorder: _passwordError
+                                  ? const OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        width: 2,
+                                        color: Colors.red,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
 
@@ -242,10 +310,20 @@ class _LoginRegisterState extends State<LoginRegister> {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
-                                child: Text(
-                                  _registerNewUser ? "Register" : "Login",
-                                  style: const TextStyle(fontSize: 18),
-                                ),
+                                child: _loading
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        _registerNewUser ? "Register" : "Login",
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
                               ),
                             ),
                           ),
