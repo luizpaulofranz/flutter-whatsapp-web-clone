@@ -7,6 +7,7 @@ import 'package:whatsapp_web_clone/provider/chat_provider.dart';
 import 'package:whatsapp_web_clone/resources/local_colors.dart';
 import 'package:whatsapp_web_clone/resources/responsive.dart';
 import 'package:whatsapp_web_clone/widgets/chats_widget.dart';
+import 'package:whatsapp_web_clone/widgets/contacts_list.dart';
 import 'package:whatsapp_web_clone/widgets/messages_widget.dart';
 
 class HomeWeb extends StatefulWidget {
@@ -101,78 +102,105 @@ class ChatSideArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: LocalColors.lightBarBackgroud,
-        border: Border(
-          right: BorderSide(color: LocalColors.background, width: 1),
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            color: LocalColors.barBackground,
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: Colors.grey,
-                  backgroundImage: CachedNetworkImageProvider(
-                    currentUser.profileImageUrl,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.message),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut().then(
-                          (_) =>
-                              Navigator.pushReplacementNamed(context, "/login"),
-                        );
-                  },
-                  icon: const Icon(Icons.logout),
-                )
-              ],
-            ),
+    return DefaultTabController(
+      length: 2,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: LocalColors.lightBarBackgroud,
+          border: Border(
+            right: BorderSide(color: LocalColors.background, width: 1),
           ),
-
-          //Search bar
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(100),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {},
-                ),
-                const Expanded(
-                  child: TextField(
-                    decoration: InputDecoration.collapsed(
-                      hintText: "Search for a chat",
+        ),
+        child: Column(
+          children: [
+            Container(
+              color: LocalColors.barBackground,
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.grey,
+                    backgroundImage: CachedNetworkImageProvider(
+                      currentUser.profileImageUrl,
                     ),
                   ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut().then(
+                            (_) => Navigator.pushReplacementNamed(
+                                context, "/login"),
+                          );
+                    },
+                    icon: const Icon(Icons.logout),
+                  )
+                ],
+              ),
+            ),
+
+            //Search bar
+            // Container(
+            //   margin: const EdgeInsets.all(8),
+            //   decoration: BoxDecoration(
+            //     color: Colors.white,
+            //     borderRadius: BorderRadius.circular(100),
+            //   ),
+            //   child: Row(
+            //     children: [
+            //       IconButton(
+            //         icon: const Icon(Icons.search),
+            //         onPressed: () {},
+            //       ),
+            //       const Expanded(
+            //         child: TextField(
+            //           decoration: InputDecoration.collapsed(
+            //             hintText: "Search for a chat",
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+
+            const TabBar(
+              unselectedLabelColor: Colors.grey,
+              labelColor: Colors.black,
+              indicatorColor: LocalColors.primary,
+              indicatorWeight: 3,
+              labelStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+              tabs: [
+                Tab(
+                  text: "Chats",
+                ),
+                Tab(
+                  text: "Contacts",
                 ),
               ],
             ),
-          ),
 
-          //Chats list
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: const ChatWidget(),
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: const TabBarView(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: ChatWidget(),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: ContactsList(),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -238,7 +266,7 @@ class MessagesSideArea extends StatelessWidget {
         : Container(
             width: width,
             height: height,
-            color: LocalColors.lightBarBackgroud,
+            color: Colors.white,
             child: const Center(
               child: Text("Please, select a chat to see the messages."),
             ),

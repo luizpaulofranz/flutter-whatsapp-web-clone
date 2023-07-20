@@ -30,6 +30,7 @@ class _MessagesWidgetState extends State<MessagesWidget> {
 
   final _streamController = StreamController<QuerySnapshot>.broadcast();
   late StreamSubscription _streamMessages;
+  final _messageTextFieldFocus = FocusNode();
 
   void _sendMessage() {
     String messageText = _messageController.text;
@@ -67,6 +68,7 @@ class _MessagesWidgetState extends State<MessagesWidget> {
       );
       _saveChatOnFirebase(chatTo);
     }
+    _messageTextFieldFocus.requestFocus();
   }
 
   // This only saves the last message, used to list users chats
@@ -243,10 +245,13 @@ class _MessagesWidgetState extends State<MessagesWidget> {
                         ),
                         Expanded(
                           child: TextField(
+                            focusNode: _messageTextFieldFocus,
                             controller: _messageController,
+                            onSubmitted: (_) => _sendMessage(),
                             decoration: const InputDecoration(
-                                hintText: "Type a message",
-                                border: InputBorder.none),
+                              hintText: "Type a message",
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
                         const Icon(Icons.attach_file),

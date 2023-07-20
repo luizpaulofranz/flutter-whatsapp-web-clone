@@ -116,6 +116,7 @@ class _LoginRegisterState extends State<LoginRegister> {
             } else {
               setState(() {
                 _nameError = true;
+                _loading = false;
               });
               print("Invalid name, at least 3 characters");
             }
@@ -145,17 +146,16 @@ class _LoginRegisterState extends State<LoginRegister> {
         print("Invalid password");
         setState(() {
           _passwordError = true;
+          _loading = false;
         });
       }
     } else {
       print("Invalid Email");
       setState(() {
         _emailError = true;
+        _loading = false;
       });
     }
-    setState(() {
-      _loading = false;
-    });
   }
 
   @override
@@ -221,7 +221,9 @@ class _LoginRegisterState extends State<LoginRegister> {
                               style: _pictureError
                                   ? OutlinedButton.styleFrom(
                                       side: const BorderSide(
-                                          width: 2, color: Colors.red),
+                                        width: 2,
+                                        color: Colors.red,
+                                      ),
                                     )
                                   : null,
                               child: const Text("Select photo"),
@@ -277,6 +279,7 @@ class _LoginRegisterState extends State<LoginRegister> {
                             keyboardType: TextInputType.text,
                             controller: _controllerPass,
                             obscureText: true,
+                            onSubmitted: (_) => _formSubmit(), 
                             decoration: InputDecoration(
                               hintText: _registerNewUser
                                   ? "Must have more than 7 characters"
